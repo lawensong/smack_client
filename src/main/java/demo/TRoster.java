@@ -1,5 +1,7 @@
 package demo;
 
+import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
@@ -35,7 +37,7 @@ public class TRoster {
     }
 
     public List<RosterEntry> getEntriesByGroup(Roster roster, String groupName){
-        List<RosterEntry> entriesList = new ArrayList<>();
+        List<RosterEntry> entriesList = new ArrayList<RosterEntry>();
         RosterGroup rosterGroup = roster.getGroup(groupName);
         Collection<RosterEntry> rosterEntries = rosterGroup.getEntries();
         Iterator<RosterEntry> i = rosterEntries.iterator();
@@ -44,4 +46,51 @@ public class TRoster {
         }
         return entriesList;
     }
+
+    public List<RosterEntry> getAllEntry(Roster roster){
+        List<RosterEntry> EntriesList = new ArrayList<RosterEntry>();
+        Collection<RosterEntry> rosterEntries = roster.getEntries();
+        Iterator<RosterEntry> i = rosterEntries.iterator();
+        while (i.hasNext()){
+            EntriesList.add(i.next());
+        }
+        return EntriesList;
+    }
+
+    public boolean addUser(Roster roster, String userName, String name){
+        try{
+            roster.createEntry(userName, name, null);
+            return true;
+        }catch (Exception e){
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean addUserGroup(Roster roster, String userName, String name, String groupName){
+        try {
+            roster.createEntry(userName, name, new String[]{groupName});
+            return true;
+        }catch (Exception e){
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean removeUser(Roster roster, String userName){
+        try {
+            if(userName.contains("@")){
+                userName = userName.split("@")[0];
+            }
+
+            RosterEntry entry = roster.getEntry(userName);
+            System.out.println("remove user");
+            roster.removeEntry(entry);
+            return true;
+        }catch (Exception e){
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }
