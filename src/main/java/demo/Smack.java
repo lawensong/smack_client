@@ -13,7 +13,7 @@ import org.jivesoftware.smack.roster.RosterEntries;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
-import org.apache.log4j.Logger;
+
 
 import java.util.Collection;
 
@@ -21,7 +21,6 @@ import java.util.Collection;
  * Created by Administrator on 2016/1/20.
  */
 public class Smack {
-    private static Logger logger = Logger.getLogger(Hello.class);
     public XMPPTCPConnection connection = null;
 
     public boolean conServer(){
@@ -33,7 +32,7 @@ public class Smack {
             return true;
         }catch (Exception e){
             System.out.println("connection get error");
-            e.printStackTrace();
+//            e.printStackTrace();
         }
         return false;
     }
@@ -133,16 +132,6 @@ public class Smack {
             }
         }catch (Exception e){
             e.printStackTrace();
-        }
-    }
-
-    public void main(String[] args){
-        System.out.println("this is a test");
-        if(conServer()){
-            login();
-            sendMessage("hello, this is a test!");
-            setPresence(2);
-            disconnect();
         }
     }
 }
