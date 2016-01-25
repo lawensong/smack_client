@@ -2,9 +2,12 @@ package demo;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.MessageListener;
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat.Chat;
 import org.jivesoftware.smack.chat.ChatManager;
 import org.jivesoftware.smack.chat.ChatMessageListener;
+import org.jivesoftware.smack.java7.Java7SmackInitializer;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.packet.Presence;
@@ -15,30 +18,44 @@ import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 
 
+import java.io.IOException;
 import java.util.Collection;
 
 /**
  * Created by Administrator on 2016/1/20.
  */
 public class Smack {
-    public XMPPTCPConnection connection = null;
+    private XMPPTCPConnection conn;
 
-    public boolean conServer(){
-        XMPPTCPConnectionConfiguration conf = XMPPTCPConnectionConfiguration.builder().setHost("localhost")
+    public void conServer(){
+        new Java7SmackInitializer().initialize();
+        XMPPTCPConnectionConfiguration conf = XMPPTCPConnectionConfiguration.builder().setHost("192.168.16.175")
+                .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
                 .setPort(5222).setServiceName("localhost").build();
-        try{
-            connection = new XMPPTCPConnection(conf);
-            connection.connect();
-            return true;
-        }catch (Exception e){
-            System.out.println("connection get error");
+
+        try {
+            conn = new XMPPTCPConnection(conf);
+            conn.connect();
+            conn.login("shnanyang","123456");
+        } catch (SmackException e) {
+//            e.printStackTrace();
+        } catch (IOException e) {
+//            e.printStackTrace();
+        } catch (XMPPException e) {
 //            e.printStackTrace();
         }
-        return false;
+    }
+
+    public boolean isConnection(){
+        if(conn.isConnected()){
+            return true;
+        }else {
+            return false;
+        }
     }
 
     public String regist(String name, String password){
-        if(connection == null){
+        if(conn == null){
             return "0";
         }
         return "1";
@@ -46,7 +63,7 @@ public class Smack {
 
     public boolean login(){
         try{
-            connection.login("shnanyang", "123456");
+            conn.login("shnanyang", "123456");
             return true;
         }catch (Exception e){
             System.out.println("login get error");
@@ -57,7 +74,7 @@ public class Smack {
 
     public boolean sendMessage(String msg){
         try{
-            Chat chat = ChatManager.getInstanceFor(connection).createChat("admin@localhost/test", new ChatMessageListener() {
+            Chat chat = ChatManager.getInstanceFor(conn).createChat("admin@localhost/test", new ChatMessageListener() {
                 public void processMessage(Chat chat, Message message) {
                     // Print out any messages we get back to standard out.
                     System.out.println("Received message: " + message);
@@ -73,7 +90,7 @@ public class Smack {
     }
 
     public void setPresence(int code){
-        if(connection == null){
+        if(conn == null){
             return;
         }
 
@@ -82,41 +99,47 @@ public class Smack {
             switch (code){
                 case 0:
                     presence = new Presence(Presence.Type.available);
-                    connection.sendStanza(presence);
+                    conn.sendStanza(presence);
                     System.out.println("online");
                     System.out.println(presence.toXML());
+                    break;
                 case 1:
                     presence = new Presence(Presence.Type.available);
                     presence.setMode(Presence.Mode.chat);
-                    connection.sendStanza(presence);
+                    conn.sendStanza(presence);
                     System.out.println("chat");
                     System.out.println(presence.toXML());
+                    break;
                 case 2:
                     presence = new Presence(Presence.Type.available);
                     presence.setMode(Presence.Mode.away);
-                    connection.sendStanza(presence);
+                    conn.sendStanza(presence);
                     System.out.println("away");
                     System.out.println(presence.toXML());
+                    break;
                 case 3:
                     presence = new Presence(Presence.Type.available);
                     presence.setMode(Presence.Mode.dnd);
-                    connection.sendStanza(presence);
+                    conn.sendStanza(presence);
                     System.out.println("busy");
                     System.out.println(presence.toXML());
+                    break;
                 case 4:
-                    Roster roster = Roster.getInstanceFor(connection);
+                    Roster roster = Roster.getInstanceFor(conn);
                     Collection<RosterEntry> entries = roster.getEntries();
                     for(RosterEntry entry: entries){
                         presence = new Presence(Presence.Type.available);
-                        presence.setFrom(connection.getUser());
+                        presence.setFrom(conn.getUser());
                         presence.setTo(entry.getUser());
-                        connection.sendStanza(presence);
+                        conn.sendStanza(presence);
                         System.out.println(presence.toXML());
                     }
+                    break;
                 case 5:
                     presence = new Presence(Presence.Type.unavailable);
-                    connection.sendStanza(presence);
+                    conn.sendStanza(presence);
                     System.out.println("unavailable");
+                    break;
                 default:
                     break;
             }
@@ -127,8 +150,8 @@ public class Smack {
 
     public void disconnect(){
         try {
-            if (connection != null){
-                connection.disconnect();
+            if (conn != null){
+                conn.disconnect();
             }
         }catch (Exception e){
             e.printStackTrace();
