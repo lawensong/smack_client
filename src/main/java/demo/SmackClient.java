@@ -5,6 +5,7 @@ import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.java7.Java7SmackInitializer;
 import org.jivesoftware.smack.packet.IQ;
+import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
@@ -21,6 +22,7 @@ import org.jivesoftware.smackx.muc.DiscussionHistory;
 import org.jivesoftware.smackx.muc.HostedRoom;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
+import org.jivesoftware.smackx.offline.OfflineMessageManager;
 import org.jivesoftware.smackx.search.ReportedData;
 import org.jivesoftware.smackx.search.UserSearchManager;
 import org.jivesoftware.smackx.vcardtemp.packet.VCard;
@@ -46,6 +48,7 @@ public class SmackClient {
     }
 
     public XMPPTCPConnection getConnection(){
+        SmackConfiguration.DEBUG = true;
         if(connection == null){
             openConnection();
         }
@@ -419,7 +422,7 @@ public class SmackClient {
             String encodedImage = StringUtils.encodeHex(bytes);
             vCard.setAvatar(bytes);
             vCard.setEncodedImage(encodedImage);
-            vCard.setField("PHOTO", "<TYPE>image/jpg</TYPE><BINVAL>"+encodedImage+"</BINVAL>", true);
+            vCard.setField("PHOTO", "<TYPE>image/jpg</TYPE><BINVAL>" + encodedImage + "</BINVAL>", true);
 
             ByteArrayInputStream bais = new ByteArrayInputStream(vCard.getAvatar());
             //TODO
@@ -603,5 +606,46 @@ public class SmackClient {
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 获取离线信息
+     * @return
+     */
+    public Map<String, List<HashMap<String, String>>> getHisMessage(){
+        Map<String, List<HashMap<String, String>>> offlineMsgs = null;
+        try {
+            OfflineMessageManager offlineMessageManager = new OfflineMessageManager(getConnection());
+            List<Message> messageList = offlineMessageManager.getMessages();
+            Iterator<Message> it = messageList.iterator();
+
+            int count = messageList.size();
+            if(count < 1){
+                return null;
+            }
+
+            offlineMsgs = new HashMap<String, List<HashMap<String, String>>>();
+            while (it.hasNext()){
+                Message message = it.next();
+                String fromUser = message.getFrom();
+                HashMap<String, String> history = new HashMap<String, String>();
+                history.put("useraccount", getConnection().getUser());
+                history.put("friendaccount", fromUser);
+                history.put("info", message.getBody());
+                history.put("type", "left");
+                if(offlineMsgs.containsKey(fromUser)){
+                    offlineMsgs.get(fromUser).add(history);
+                }else {
+                    List<HashMap<String, String>> temp = new ArrayList<HashMap<String, String>>();
+                    temp.add(history);
+                    offlineMsgs.put(fromUser, temp);
+                }
+            }
+
+            offlineMessageManager.deleteMessages();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return offlineMsgs;
     }
 }

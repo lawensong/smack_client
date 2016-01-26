@@ -20,11 +20,16 @@ public class Hello {
 //        smackClient.regist("tom", "123456");
 //        smackClient.setPresence(3);
 //        smackClient.addGroup("friends");
-        smackClient.addUser("admin", "admin", "friends");
+//        smackClient.addUser("admin", "admin", "friends");
+        try {
+            Thread.sleep(10000);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
         smackClient.getEntriesByGroup("friends");
-        smackClient.getAllEntries();
-        smackClient.getGroups();
-
+//        smackClient.getAllEntries();
+//        smackClient.getGroups();
+//        smackClient.getHisMessage();
         smackClient.closeConnection();
     }
 }
