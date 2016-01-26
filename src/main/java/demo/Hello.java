@@ -22,14 +22,19 @@ public class Hello {
 //        smackClient.addGroup("friends");
 //        smackClient.addUser("admin", "admin", "friends");
         try {
-            Thread.sleep(10000);
+            Thread.sleep(5000);
         }catch (Exception e){
             e.printStackTrace();
         }
-        smackClient.getEntriesByGroup("friends");
+        System.out.println("***********************************************************");
+//        smackClient.getEntriesByGroup("friends");
 //        smackClient.getAllEntries();
 //        smackClient.getGroups();
 //        smackClient.getHisMessage();
+//        smackClient.getGroups();
+//        smackClient.getUserVcard();
+        smackClient.createRoom("shnanyang", "admin", "");
+
         smackClient.closeConnection();
     }
 }

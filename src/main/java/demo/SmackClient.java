@@ -41,6 +41,7 @@ public class SmackClient {
     private int PORT = 5222;
     private String SERVER_NAME = "localhost";
     private static XMPPTCPConnection connection = null;
+    private VCard vCard;
     private TConnectionListener tConnectionListener;
 
     synchronized public static XMPPTCPConnection getInstace(){
@@ -101,6 +102,9 @@ public class SmackClient {
 
             tConnectionListener = new TConnectionListener();
             getConnection().addConnectionListener(tConnectionListener);
+
+            vCard = new VCard();
+            vCard.load(connection);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -218,9 +222,11 @@ public class SmackClient {
         Collection<RosterGroup> rosterGroups = roster.getGroups();
         Iterator<RosterGroup> i = rosterGroups.iterator();
         while (i.hasNext()){
-            groupList.add(i.next());
+            RosterGroup rosterGroup = i.next();
+            groupList.add(rosterGroup);
+            System.out.println("group list is: " + rosterGroup.getName());
         }
-        System.out.println("get roster "+groupList);
+
         return groupList;
     }
     /**
@@ -329,10 +335,15 @@ public class SmackClient {
      * 获取用户VCard信息
      * @return
      */
-    public VCard getUserVcard(String name){
-        VCard vCard = new VCard();
+    public VCard getUserVcard(){
+//        VCard vCard = new VCard();
         try {
-            vCard.load(getConnection(), name);
+//            vCard.load(getConnection());
+            if("".equals(vCard.getNickName()) || null==vCard.getNickName()){
+                vCard.setNickName("汤姆猫");
+                getConnection().sendStanza(vCard);
+            }
+            System.out.println("nick is "+vCard.getNickName());
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -513,7 +524,7 @@ public class SmackClient {
         MultiUserChat muc = null;
         try {
             muc = MultiUserChatManager.getInstanceFor(getConnection())
-                    .getMultiUserChat(roomName + "@conference" + getConnection().getServiceName());
+                    .getMultiUserChat(roomName + "@" + getConnection().getServiceName());
             muc.create(roomName);
 
             Form form = muc.getConfigurationForm();
