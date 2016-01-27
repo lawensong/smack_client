@@ -17,6 +17,7 @@ public class Hello {
         SmackClient smackClient = new SmackClient();
         smackClient.getConnection();
         smackClient.login("shnanyang", "123456");
+        smackClient.setPresence(1);
 //        smackClient.regist("tom", "123456");
 //        smackClient.setPresence(3);
 //        smackClient.addGroup("friends");
@@ -33,7 +34,15 @@ public class Hello {
 //        smackClient.getHisMessage();
 //        smackClient.getGroups();
 //        smackClient.getUserVcard();
-        smackClient.createRoom("shnanyang", "admin", "");
+//        smackClient.createRoom("shnanyang", "boy7", "");
+//        smackClient.joinMultiUserChat("shnanyang", "boy7", "123456");
+        smackClient.sendMessage("hello world!");
+        smackClient.addPacketListener();
+        try {
+            Thread.sleep(40000);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
 
         smackClient.closeConnection();
     }

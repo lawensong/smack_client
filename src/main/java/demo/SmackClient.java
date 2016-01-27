@@ -1,12 +1,15 @@
 package demo;
 
-import org.jivesoftware.smack.ConnectionConfiguration;
-import org.jivesoftware.smack.SmackConfiguration;
+import org.jivesoftware.smack.*;
+import org.jivesoftware.smack.chat.Chat;
+import org.jivesoftware.smack.chat.ChatManager;
+import org.jivesoftware.smack.chat.ChatMessageListener;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.java7.Java7SmackInitializer;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
@@ -493,6 +496,21 @@ public class SmackClient {
         }
     }
 
+    public boolean sendMessage(String msg){
+        try {
+            Chat chat = ChatManager.getInstanceFor(getConnection()).createChat("sh@localhost/PC-20150119JKD1", new ChatMessageListener() {
+                @Override
+                public void processMessage(Chat chat, Message message) {
+                    System.out.println("------->>>>get reply msg"+message.getBody());
+                }
+            });
+            chat.sendMessage(msg);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return true;
+    }
+
     /**
      * 初始化会议室列表
      * @return
@@ -505,6 +523,7 @@ public class SmackClient {
             hostedRooms = MultiUserChatManager.getInstanceFor(getConnection()).getHostedRooms(getConnection().getServiceName());
             for(HostedRoom entry: hostedRooms){
                 roominfos.add(entry);
+                System.out.println("get rooms "+entry.getJid());
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -524,23 +543,23 @@ public class SmackClient {
         MultiUserChat muc = null;
         try {
             muc = MultiUserChatManager.getInstanceFor(getConnection())
-                    .getMultiUserChat(roomName + "@" + getConnection().getServiceName());
+                    .getMultiUserChat(roomName + "@conference." + getConnection().getServiceName());
             muc.create(roomName);
 
             Form form = muc.getConfigurationForm();
             Form submitForm = form.createAnswerForm();
-            List<FormField> formFields = form.getFields();
-            Iterator<FormField> fields = formFields.iterator();
-            while (fields.hasNext()){
-                FormField field = (FormField)fields.next();
-                if(!FormField.FORM_TYPE.equals(field.getType()) && field.getVariable()!=null){
-                    submitForm.setDefaultAnswer(field.getVariable());
-                }
-            }
-
-            List<String> owners = new ArrayList<String>();
-            owners.add(getConnection().getUser());
-            submitForm.setAnswer("muc#roomconfig_roomowners", owners);
+//            List<FormField> formFields = form.getFields();
+//            Iterator<FormField> fields = formFields.iterator();
+//            while (fields.hasNext()){
+//                FormField field = (FormField)fields.next();
+//                if(!FormField.FORM_TYPE.equals(field.getType()) && field.getVariable()!=null){
+//                    submitForm.setDefaultAnswer(field.getVariable());
+//                }
+//            }
+//
+//            List<String> owners = new ArrayList<String>();
+//            owners.add(getConnection().getUser());
+//            submitForm.setAnswer("muc#roomconfig_roomowners", owners);
             // 设置聊天室是持久聊天室，即将要被保存下来
             submitForm.setAnswer("muc#roomconfig_persistentroom", true);
             // 房间仅对成员开放
@@ -557,13 +576,13 @@ public class SmackClient {
             // 能够发现占有者真实 JID 的角色
             // submitForm.setAnswer("muc#roomconfig_whois", "anyone");
             // 登录房间对话
-            submitForm.setAnswer("muc#roomconfig_enablelogging", true);
+//            submitForm.setAnswer("muc#roomconfig_enablelogging", true);
             // 仅允许注册的昵称登录
-            submitForm.setAnswer("x-muc#roomconfig_reservednick", true);
+//            submitForm.setAnswer("x-muc#roomconfig_reservednick", true);
             // 允许使用者修改昵称
-            submitForm.setAnswer("x-muc#roomconfig_canchangenick", false);
+//            submitForm.setAnswer("x-muc#roomconfig_canchangenick", false);
             // 允许用户注册房间
-            submitForm.setAnswer("x-muc#roomconfig_registration", false);
+//            submitForm.setAnswer("x-muc#roomconfig_registration", false);
             muc.sendConfigurationForm(submitForm);
         }catch (Exception e){
             e.printStackTrace();
@@ -582,7 +601,7 @@ public class SmackClient {
     public MultiUserChat joinMultiUserChat(String user, String roomsName, String password){
         try {
             MultiUserChat muc = MultiUserChatManager.getInstanceFor(getConnection())
-                    .getMultiUserChat(roomsName + "@conference" + getConnection().getServiceName());
+                    .getMultiUserChat(roomsName + "@conference." + getConnection().getServiceName());
             DiscussionHistory history = new DiscussionHistory();
             history.setMaxChars(0);
             muc.join(user, password, history, SmackConfiguration.getDefaultPacketReplyTimeout());
@@ -658,5 +677,28 @@ public class SmackClient {
             e.printStackTrace();
         }
         return offlineMsgs;
+    }
+
+    /**
+     * 添加监听消息
+     * @return
+     */
+    public boolean addPacketListener(){
+        StanzaListener stanzaListener = new StanzaListener() {
+            @Override
+            public void processPacket(Stanza packet) throws SmackException.NotConnectedException {
+                if(packet.getClass() == Message.class){
+                    Message message = (Message)packet;
+                    System.out.println("receive Message--->>>From:" + packet.getFrom().split("@")[0] + " message:" + message.getBody());
+                }else if(packet.getClass() == Presence.class){
+                    Presence presence = (Presence)packet;
+                    System.out.println("receive Presence--->>>From: "+presence.getType());
+                } else{
+                    System.out.println("receive packet:unknown "+packet);
+                }
+            }
+        };
+        getConnection().addAsyncStanzaListener(stanzaListener, null);
+        return true;
     }
 }
